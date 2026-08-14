@@ -18,7 +18,25 @@ soup = bts(webpage.content, "html.parser")
 links = soup.find_all("a", class_=lambda x: x and "product" in x.lower())
 #print(links)
 
-one =links[0].get("href")
-product_link = "https://www.regirlworld.com" + one
-print(one)
-print(product_link)
+product =links[0].get("href")
+product_link = "https://www.regirlworld.com" + product
+#print(product)
+#print(product_link)
+
+new_webpage = rq.get(product_link, headers= Header)
+print(new_webpage)
+
+new_soup = bts(new_webpage.content, "html.parser")
+#print(new_soup)
+
+result = new_soup.find("h1", class_=lambda x: x and "product" in x.lower()).text.strip()
+print(result)
+
+price = new_soup.find("span", class_=lambda x: x and "price-item" in x.lower()).text.strip()
+print(price)
+review = new_soup.find("b",class_=lambda x: x and "jdgm-rev__title" in x.lower()).text.strip()
+review_body = new_soup.find("div",class_=lambda x: x and "jdgm-rev__body" in x.lower()).text.strip()
+
+print(review)
+print(review_body)
+
