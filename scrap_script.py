@@ -1,42 +1,90 @@
-from bs4 import BeautifulSoup as bts # for scraping the data 
-import requests as rq # to handle the requests to be sent
-import pandas as pd  # to clean and manipulate the data
+from bs4 import BeautifulSoup as bts # for scraping the data.
+import requests as rq # to handle the requests to be sent.
+import pandas as pd  # to clean and manipulate the data.
+import numpy as np # for cleaning and manipulating the data.
 
-URL = "https://www.regirlworld.com/collections/all"
-#Headers 
-Header = ({'UserAgent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36', 'Accept-Language' : 'en-US,en;q=0.5'})
+# Function to extract the product title
+def get_title(new_soup):
+    try:
+        title = new_soup.find("h1", class_=lambda x: x and "product" in x.lower()).text.strip()
 
-webpage = rq.get(URL,headers= Header)
+    except AttributeError:
+        title = ""	
 
-#print(webpage)
+    return title
 
-#print(type(webpage.content))
+# Function to extract the product price
+def get_price(new_soup):
+    try:
+        price = new_soup.find("span", class_=lambda x: x and "price-item" in x.lower()).text.strip()
 
-soup = bts(webpage.content, "html.parser")
-#print(soup)
+    except AttributeError:
+        price = ""	
 
-links = soup.find_all("a", class_=lambda x: x and "product" in x.lower())
-#print(links)
+    return price
 
-product =links[0].get("href")
-product_link = "https://www.regirlworld.com" + product
-#print(product)
-#print(product_link)
+# Function to extract the review title
+def get_review_title(new_soup):
+    try:
+        review_title = new_soup.find("b",class_=lambda x: x and "jdgm-rev__title" in x.lower()).text.strip()
 
-new_webpage = rq.get(product_link, headers= Header)
-print(new_webpage)
+    except AttributeError:
+        review_title = ""	
 
-new_soup = bts(new_webpage.content, "html.parser")
-#print(new_soup)
+    return review_title
 
-result = new_soup.find("h1", class_=lambda x: x and "product" in x.lower()).text.strip()
-print(result)
+# Function to extract the review body
+def get_review_body(new_soup):
+    try:
+        review_body = new_soup.find("div",class_=lambda x: x and "jdgm-rev__body" in x.lower()).text.strip()
 
-price = new_soup.find("span", class_=lambda x: x and "price-item" in x.lower()).text.strip()
-print(price)
-review = new_soup.find("b",class_=lambda x: x and "jdgm-rev__title" in x.lower()).text.strip()
-review_body = new_soup.find("div",class_=lambda x: x and "jdgm-rev__body" in x.lower()).text.strip()
+    except AttributeError:
+        review_body = ""	
 
-print(review)
-print(review_body)
+    return review_body
+
+
+if __name__ == '__main__':
+
+    # add your user agent 
+    HEADERS = ({'UserAgent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36', 'Accept-Language' : 'en-US,en;q=0.5'})
+
+    # The webpage URL
+    URL = "https://www.regirlworld.com/collections/all"
+
+    # HTTP Request
+    webpage = rq.get(URL, headers=HEADERS)
+
+    # Soup Object containing all data
+    soup = bts(webpage.content, "html.parser")
+
+    # Fetch links as List of Tag Objects
+    links = soup.find_all("a", class_=lambda x: x and "product" in x.lower())
+
+    # Store the links
+    links_list = []
+
+    # Loop for extracting links from Tag Objects
+    for link in links:
+            links_list.append(link.get('href'))
+
+    d = {"title":[], "price":[], "review_title":[], "review_body":[] }
+    
+    # Loop for extracting product details from each link 
+    for link in links_list:
+        new_webpage = rq.get("https://www.regirlworld.com" + link, headers=HEADERS)
+
+        new_soup = bts(new_webpage.content, "html.parser")
+
+        # Function calls to display all necessary product information
+        d['title'].append(get_title(new_soup))
+        d['price'].append(get_price(new_soup))
+        d['review_title'].append(get_review_title(new_soup))
+        d['review_body'].append(get_review_body(new_soup))
+
+    
+    amazon_df = pd.DataFrame.from_dict(d)
+    amazon_df['title'].replace('', np.nan, inplace=True)
+    amazon_df = amazon_df.dropna(subset=['title'])
+    amazon_df.to_csv("amazon_data.csv", header=True, index=False)
 
