@@ -83,8 +83,8 @@ if __name__ == '__main__':
         d['review_body'].append(get_review_body(new_soup))
 
     
-    amazon_df = pd.DataFrame.from_dict(d)
-    amazon_df['title'].replace('', np.nan, inplace=True)
-    amazon_df = amazon_df.dropna(subset=['title'])
-    amazon_df.to_csv("amazon_data.csv", header=True, index=False)
+    regirl_df = pd.DataFrame.from_dict(d)
+    regirl_df['title'].replace('', np.nan, inplace=True)
+    regirl_df = regirl_df.dropna(subset=['title'])
+    regirl_df.to_csv("regirl_data.csv", header=True, index=False)
 
